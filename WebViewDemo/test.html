@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+        <meta name="format-detection" content="telephone=no" />
+        <title>分享页</title>
+    </head>
+    <body>
+        <div>
+            <a href="darkangel://smsLogin?username=12323123&code=892845">短信验证登录</a>
+        </div>
+        </div>
+            <a href="javascript:void(0);" class="sharebtn" onClick="share('分享标题', 'http://cc.cocimg.com/api/uploads/170425/b2d6e7ea5b3172e6c39120b7bfd662fb.jpg', location.href)">分享活动，领30元红包</a>
+        </div>
+        <div onClick="alert(testAddMethod(1,5))">点击测试两数相加</div>
+        <a href="javascript:void(0);" onClick="test()">测试新分享</a>
+        <div id="shareResult"></div>
+        <script>
+            //简单分享
+            function share (title, imgUrl, link) {
+                //便于WKWebView测试
+                window.webkit.messageHandlers.share.postMessage({title: title, imgUrl: imgUrl, link: link});
+                //这里需要OC实现
+            }
+        
+            //该方法传入两个整数，求和，并返回结果
+            function testAddMethod (a, b) {
+                //需要OC实现a+b，并返回
+                return a + b;
+            }
+        
+            //有回调的分享
+            function shareNew(shareData) {
+                //用于WKWebView, 对象转json WKWebView并没有办法把js function转换过去，因此你会发现oc那边的回调中没有result字段
+                window.webkit.messageHandlers.shareNew.postMessage(JSON.stringify(shareData));
+                
+                var title = shareData.title;
+                var imgUrl = shareData.imgUrl;
+                var link = shareData.link;
+                var result = shareData.result;
+                //do something
+                //这里模拟异步操作
+                setTimeout(function(){
+                   //2s之后，回调true分享成功
+                   result(true);
+                }, 2000);
+                       
+            }
+        
+            function test() {
+                //调用时，应该
+                shareNew({
+                         title: "title",
+                         imgUrl: "http://img.dd.com/xxx.png",
+                         link: location.href,
+                         result: function(res) {
+                           //这里shareResult 等同于 document.getElementById("shareResult")
+                           shareResult.innerHTML = res ? "success" : "failure";
+                         }
+                });
+            }
+        </script>
+    </body>
+</html>
