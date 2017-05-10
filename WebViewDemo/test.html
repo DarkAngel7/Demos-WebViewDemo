@@ -16,8 +16,8 @@
             <a href="javascript:void(0);" class="sharebtn" onClick="share('分享标题', 'http://cc.cocimg.com/api/uploads/170425/b2d6e7ea5b3172e6c39120b7bfd662fb.jpg', location.href)">分享活动，领30元红包</a>
         </div>
         <div onClick="alert(testAddMethod(1,5))">点击测试两数相加</div>
-        <a href="javascript:void(0);" onClick="test()">测试新分享</a>
-        <div id="shareResult"></div>
+        <a href="javascript:void(0);" onClick="test()">测试新分享</a></br>
+        <h>下面展示分享结果</p><div id="shareResult"></div>
         <script>
             //简单分享
             function share (title, imgUrl, link) {
@@ -32,10 +32,12 @@
                 return a + b;
             }
         
-            //有回调的分享
+            /**
+             * 分享方法，并且会异步回调分享结果
+             * @param  {对象类型} shareData 一个分享数据的对象，包含title,imgUrl,link以及一个回调function
+             * @return {void}	 无同步返回值
+             */
             function shareNew(shareData) {
-                //用于WKWebView, 对象转json WKWebView并没有办法把js function转换过去，因此你会发现oc那边的回调中没有result字段
-                window.webkit.messageHandlers.shareNew.postMessage(JSON.stringify(shareData));
                 
                 var title = shareData.title;
                 var imgUrl = shareData.imgUrl;
@@ -47,10 +49,18 @@
                    //2s之后，回调true分享成功
                    result(true);
                 }, 2000);
-                       
+                
+                
+                //用于WKWebView，因为WKWebView并没有办法把js function传递过去，因此需要特殊处理一下
+                //把js function转换为字符串，oc端调用时 (<js function string>)(true); 即可
+                shareData.result = result.toString();
+                window.webkit.messageHandlers.shareNew.postMessage(shareData);
             }
         
             function test() {
+                //清空分享结果
+                shareResult.innerHTML = "";
+                
                 //调用时，应该
                 shareNew({
                          title: "title",

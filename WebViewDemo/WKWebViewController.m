@@ -7,8 +7,9 @@
 //
 
 #import "WKWebViewController.h"
-#import <WebKit/WebKit.h>
+#import "NSHTTPCookie+Utils.h"
 #import "Constants.h"
+#import <WebKit/WebKit.h>
 
 @interface WKWebViewController () <
 WKUIDelegate,
@@ -28,13 +29,13 @@ WKScriptMessageHandler
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
-    static WKProcessPool *pool;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        //共用一个pool
-        pool = [[WKProcessPool alloc] init];
-    });
-    configuration.processPool = pool;
+//    static WKProcessPool *pool;
+//    static dispatch_once_t onceToken;
+//    dispatch_once(&onceToken, ^{
+//        //共用一个pool
+//        pool = [[WKProcessPool alloc] init];
+//    });
+//    configuration.processPool = pool;
     
     //自定义脚本等
     WKUserContentController *controller = [[WKUserContentController alloc] init];
@@ -42,14 +43,16 @@ WKScriptMessageHandler
     WKUserScript *script = [[WKUserScript alloc] initWithSource:@"var interesting = 123;" injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO];
     //页面加载完成立刻回调，获取页面上的所有Cookie
     WKUserScript *cookieScript = [[WKUserScript alloc] initWithSource:@"                window.webkit.messageHandlers.currentCookies.postMessage(document.cookie);" injectionTime:WKUserScriptInjectionTimeAtDocumentEnd forMainFrameOnly:NO];
+    //alert Cookie
+//    WKUserScript *alertCookieScript = [[WKUserScript alloc] initWithSource:@"alert(document.cookie);" injectionTime:WKUserScriptInjectionTimeAtDocumentEnd forMainFrameOnly:NO];
     //添加自定义的cookie
-    WKUserScript *baiduCookieScript = [[WKUserScript alloc] initWithSource:@"                document.cookie = 'DarkAngelCookie=DarkAngel;'" injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO];
-//    WKUserScript *baiduCookieScript = [[WKUserScript alloc] initWithSource:@"func" injectionTime:WKUserScriptInjectionTimeAtDocumentEnd forMainFrameOnly:NO];
+    WKUserScript *newCookieScript = [[WKUserScript alloc] initWithSource:@"                document.cookie = 'DarkAngelCookie=DarkAngel;'" injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO];
     
     //添加脚本
     [controller addUserScript:script];
     [controller addUserScript:cookieScript];
-    [controller addUserScript:baiduCookieScript];
+//    [controller addUserScript:alertCookieScript];
+    [controller addUserScript:newCookieScript];
     //注册回调
     [controller addScriptMessageHandler:self name:@"share"];
     [controller addScriptMessageHandler:self name:@"currentCookies"];
@@ -61,18 +64,119 @@ WKScriptMessageHandler
     self.webView.allowsBackForwardNavigationGestures = YES;
     self.webView.UIDelegate = self;
     self.webView.navigationDelegate = self;
-    
+    self.webView.allowsLinkPreview = YES; //允许链接3D Touch
+    self.webView.customUserAgent = @"WebViewDemo/1.0.0";    //自定义UA
     self.webView.scrollView.contentInset = UIEdgeInsetsMake(64, 0, 49, 0);
     //史诗级神坑，为何如此写呢？参考https://opensource.apple.com/source/WebKit2/WebKit2-7600.1.4.11.10/ChangeLog   以及我博客中的介绍
     [self.webView setValue:[NSValue valueWithUIEdgeInsets:self.webView.scrollView.contentInset] forKey:@"_obscuredInsets"];
     
     [self.view addSubview:self.webView];
+    
+    //更新webView的cookie
+    [self updateWebViewCookie];
+    
     [self.webView loadRequest:[NSURLRequest requestWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"test" ofType:@"html"]]]];
     //可以测试百度还是test
-    //[self.webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://baidu.com"]]];
+//    [self loadUrl:@"http://m.baidu.com/"];
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder
+{
+    self = [super initWithCoder:coder];
+    if (self) {
+        //比如我在这个时候保存了Cookie
+        [self saveCookie];
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    //记得移除
+    [self.webView.configuration.userContentController removeScriptMessageHandlerForName:@"share"];
+    [self.webView.configuration.userContentController removeScriptMessageHandlerForName:@"currentCookies"];
+    [self.webView.configuration.userContentController removeScriptMessageHandlerForName:@"shareNew"];
 }
 
 #pragma mark - Events
+
+/*!
+ *  更新webView的cookie
+ */
+- (void)updateWebViewCookie
+{
+    WKUserScript * cookieScript = [[WKUserScript alloc] initWithSource:[self cookieString] injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO];
+    //添加Cookie
+    [self.webView.configuration.userContentController addUserScript:cookieScript];
+}
+
+//比如你在登录成功时，保存Cookie
+- (void)saveCookie
+{
+    /*
+    //如果从已有的地方保存Cookie，比如登录成功
+    NSArray *allCookies = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies];
+    for (NSHTTPCookie *cookie in allCookies) {
+        if ([cookie.name isEqualToString:DAServerSessionCookieName]) {
+            NSDictionary *dict = [[NSUserDefaults standardUserDefaults] dictionaryForKey:DAUserDefaultsCookieStorageKey];
+            if (dict) {
+                NSHTTPCookie *localCookie = [NSHTTPCookie cookieWithProperties:dict];
+                if (![cookie.value isEqual:localCookie.value]) {
+                    NSLog(@"本地Cookie有更新");
+                }
+            }
+            [[NSUserDefaults standardUserDefaults] setObject:cookie.properties forKey:DAUserDefaultsCookieStorageKey];
+            [[NSUserDefaults standardUserDefaults] synchronize];
+            break;
+        }
+    }
+     */
+
+    NSHTTPCookie *cookie = [NSHTTPCookie cookieWithProperties:@{
+                                                                NSHTTPCookieName: DAServerSessionCookieName,
+                                                                NSHTTPCookieValue: @"1314521",
+                                                                NSHTTPCookieDomain: @".baidu.com",
+                                                                NSHTTPCookiePath: @"/"
+                                                                }];
+    [[NSUserDefaults standardUserDefaults] setObject:cookie.properties forKey:DAUserDefaultsCookieStorageKey];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+
+/**
+ 解决首次加载页面Cookie带不上问题
+
+ @param url 链接
+ */
+- (void)loadUrl:(NSString *)url
+{
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
+    [self.webView loadRequest:[self fixRequest:request]];
+}
+
+/**
+ 修复打开链接Cookie丢失问题
+
+ @param request 请求
+ @return 一个fixedRequest
+ */
+- (NSURLRequest *)fixRequest:(NSURLRequest *)request
+{
+    NSMutableURLRequest *fixedRequest;
+    if ([request isKindOfClass:[NSMutableURLRequest class]]) {
+        fixedRequest = (NSMutableURLRequest *)request;
+    } else {
+        fixedRequest = request.mutableCopy;
+    }
+    //防止Cookie丢失
+    NSDictionary *dict = [NSHTTPCookie requestHeaderFieldsWithCookies:[NSHTTPCookieStorage sharedHTTPCookieStorage].cookies];
+    if (dict.count) {
+        NSMutableDictionary *mDict = request.allHTTPHeaderFields.mutableCopy;
+        [mDict setValuesForKeysWithDictionary:dict];
+        fixedRequest.allHTTPHeaderFields = mDict;
+    }
+    return fixedRequest;
+}
 
 - (IBAction)refresh:(id)sender {
     //刷新
@@ -85,49 +189,83 @@ WKScriptMessageHandler
      */
 }
 
-#pragma mark - WKNavigationDelegate
-
-- (void)webView:(WKWebView *)webView didCommitNavigation:(null_unspecified WKNavigation *)navigation
-{
-    NSLog(@"%@", NSStringFromSelector(_cmd));
+#pragma mark oc -> js
+/**
+ 测试evaluateJavaScript方法
+ */
+- (IBAction)testEvaluateJavaScript {
+    
+    [self.webView evaluateJavaScript:@"document.cookie" completionHandler:^(id _Nullable cookies, NSError * _Nullable error) {
+        NSLog(@"调用evaluateJavaScript异步获取cookie：%@", cookies);
+    }];
+    
+    // do not use dispatch_semaphore_t
+    /*
+    __block id cookies;
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    [self.webView evaluateJavaScript:@"document.cookie" completionHandler:^(id _Nullable result, NSError * _Nullable error) {
+        cookies = result;
+        dispatch_semaphore_signal(semaphore);
+    }];
+    //等待三秒，接收参数
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC));
+    //打印cookie，肯定为空，因为足足等了3s，dispatch_semaphore_signal没有起作用
+    NSLog(@"cookie的值为：%@", cookies);
+    
+    //还是老实的接受异步回调吧，不要用信号来搞成同步，会卡死的，不信可以试试
+     */
 }
 
+#pragma mark - WKNavigationDelegate 方法按调用前后顺序排序
+
+//针对一次action来决定是否允许跳转，允许与否都需要调用decisionHandler，比如decisionHandler(WKNavigationActionPolicyCancel);
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
 {
+    //可以通过navigationAction.navigationType获取跳转类型，如新链接、后退等
     NSURL *URL = navigationAction.request.URL;
-    if (navigationAction.navigationType == WKNavigationTypeLinkActivated) {
-        if ([URL.scheme isEqualToString:DAWebViewDemoScheme]) {
-            if ([URL.host isEqualToString:DAWebViewDemoHostSmsLogin]) {
-                NSString *param = URL.query;
-                NSLog(@"短信验证码登录, 参数为%@", param);
-                decisionHandler(WKNavigationActionPolicyCancel);
-                return;
-            }
+    //判断URL是否符合自定义的URL Scheme
+    if ([URL.scheme isEqualToString:DAWebViewDemoScheme]) {
+        //根据不同的业务，来执行对应的操作，且获取参数
+        if ([URL.host isEqualToString:DAWebViewDemoHostSmsLogin]) {
+            NSString *param = URL.query;
+            NSLog(@"短信验证码登录, 参数为%@", param);
+            decisionHandler(WKNavigationActionPolicyCancel);
+            return;
         }
     }
+    
+#warning important 这里很重要
+    //解决Cookie丢失问题
+    NSURLRequest *originalRequest = navigationAction.request;
+    [self fixRequest:originalRequest];
+    //如果originalRequest就是NSMutableURLRequest, originalRequest中已添加必要的Cookie，可以跳转
+    //允许跳转
     decisionHandler(WKNavigationActionPolicyAllow);
+    
     NSLog(@"%@", NSStringFromSelector(_cmd));
 }
 
+//根据response来决定，是否允许跳转，允许与否都需要调用decisionHandler，如decisionHandler(WKNavigationResponsePolicyAllow);
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler
 {
     NSLog(@"%@", NSStringFromSelector(_cmd));
     decisionHandler(WKNavigationResponsePolicyAllow);
 }
- 
+
+//提交了一个跳转，早于 didStartProvisionalNavigation
+- (void)webView:(WKWebView *)webView didCommitNavigation:(null_unspecified WKNavigation *)navigation
+{
+    NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+//开始加载，对应UIWebView的- (void)webViewDidStartLoad:(UIWebView *)webView;
 - (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(null_unspecified WKNavigation *)navigation
 {
     [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
     NSLog(@"%@", NSStringFromSelector(_cmd));
 }
 
-
-- (void)webView:(WKWebView *)webView didReceiveServerRedirectForProvisionalNavigation:(null_unspecified WKNavigation *)navigation
-{
-    NSLog(@"%@", NSStringFromSelector(_cmd));
-}
-
-
+//加载成功，对应UIWebView的- (void)webViewDidFinishLoad:(UIWebView *)webView;
 - (void)webView:(WKWebView *)webView didFinishNavigation:(null_unspecified WKNavigation *)navigation
 {
     self.navigationItem.title = [self.title stringByAppendingString:webView.title];  //其实可以kvo来实现动态切换title
@@ -141,42 +279,27 @@ WKScriptMessageHandler
     NSLog(@"%@", NSStringFromSelector(_cmd));
 }
 
+//页面加载失败或者跳转失败，对应UIWebView的- (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error;
 - (void)webView:(WKWebView *)webView didFailNavigation:(null_unspecified WKNavigation *)navigation withError:(NSError *)error
 {
     [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
     NSLog(@"%@\nerror：%@", NSStringFromSelector(_cmd), error);
 }
 
+//页面加载数据时报错
 - (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(null_unspecified WKNavigation *)navigation withError:(NSError *)error
 {
     [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
     NSLog(@"%@\nerror：%@", NSStringFromSelector(_cmd), error);
 }
 
-
-#pragma mark - WKScriptMessageHandler
-
-- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message
-{
-    if ([message.name isEqualToString:@"share"]) {
-        id body = message.body;
-        NSLog(@"share分享的内容为：%@", body);
-    }
-    else if ([message.name isEqualToString:@"shareNew"]) {
-        id body = message.body;
-        NSLog(@"shareNew分享的数据为： %@", body);
-    }
-    else if ([message.name isEqualToString:@"currentCookies"]) {
-        NSString *cookiesStr = message.body;
-        NSLog(@"当前的cookie为： %@", cookiesStr);
-    }
-}
-#pragma mark WKUIDelegate
+#pragma mark - WKUIDelegate
 
 - (WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
 {
+#warning important 这里也很重要
     //这里不打开新窗口
-    [self.webView loadRequest:navigationAction.request];
+    [self.webView loadRequest:[self fixRequest:navigationAction.request]];
     return nil;
 }
 
@@ -219,14 +342,51 @@ WKScriptMessageHandler
     [self presentViewController:alertController animated:YES completion:NULL];
 }
 
-/*
-#pragma mark - Navigation
+#pragma mark - WKScriptMessageHandler  js -> oc
 
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
+- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message
+{
+    if ([message.name isEqualToString:@"share"]) {
+        id body = message.body;
+        NSLog(@"share分享的内容为：%@", body);
+    }
+    else if ([message.name isEqualToString:@"shareNew"]) {
+        NSDictionary *shareData = message.body;
+        NSLog(@"shareNew分享的数据为： %@", shareData);
+        //模拟异步回调
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            //读取js function的字符串
+            NSString *jsFunctionString = shareData[@"result"];
+            //拼接调用该方法的js字符串
+            NSString *callbackJs = [NSString stringWithFormat:@"(%@)(%d);", jsFunctionString, NO];    //后面的参数NO为模拟分享失败
+            //执行回调
+            [self.webView evaluateJavaScript:callbackJs completionHandler:^(id _Nullable result, NSError * _Nullable error) {
+                if (!error) {
+                    NSLog(@"模拟回调，分享失败");
+                }
+            }];
+        });
+    }
+    else if ([message.name isEqualToString:@"currentCookies"]) {
+        NSString *cookiesStr = message.body;
+        NSLog(@"当前的cookie为： %@", cookiesStr);
+    }
 }
-*/
+
+#pragma mark - Setters and Getters
+
+- (NSString *)cookieString
+{
+    NSMutableString *script = [NSMutableString string];
+    for (NSHTTPCookie *cookie in [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies]) {
+        // Skip cookies that will break our script
+        if ([cookie.value rangeOfString:@"'"].location != NSNotFound) {
+            continue;
+        }
+        // Create a line that appends this cookie to the web view's document's cookies
+        [script appendFormat:@"document.cookie='%@'; \n", cookie.da_javascriptString];
+    }
+    return script;
+}
 
 @end

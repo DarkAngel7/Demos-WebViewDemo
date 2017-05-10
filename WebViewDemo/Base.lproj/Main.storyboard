@@ -23,6 +23,11 @@
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </view>
                     <navigationItem key="navigationItem" id="rpZ-hl-FGC">
+                        <barButtonItem key="leftBarButtonItem" title="获取cookie" id="hjV-C9-zUy">
+                            <connections>
+                                <action selector="testEvaluateJavaScript" destination="3KO-dH-hoY" id="F2k-Eu-g6w"/>
+                            </connections>
+                        </barButtonItem>
                         <barButtonItem key="rightBarButtonItem" systemItem="refresh" id="nPt-yr-RXO">
                             <connections>
                                 <action selector="refresh:" destination="3KO-dH-hoY" id="k6p-lC-1ef"/>

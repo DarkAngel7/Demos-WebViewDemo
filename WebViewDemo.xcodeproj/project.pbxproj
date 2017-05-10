@@ -17,6 +17,8 @@
 		F26895A91D780EF7009112EB /* UIWebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F26895A81D780EF7009112EB /* UIWebViewController.m */; };
 		F26895AC1D780F01009112EB /* WKWebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F26895AB1D780F01009112EB /* WKWebViewController.m */; };
 		F26895B01D782B9D009112EB /* test.html in Resources */ = {isa = PBXBuildFile; fileRef = F26895AF1D782B9D009112EB /* test.html */; };
+		F2BE3E221EC314E4001D7FF5 /* NSHTTPCookie+Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = F2BE3E211EC314E4001D7FF5 /* NSHTTPCookie+Utils.m */; };
+		F2BE3E251EC31FB1001D7FF5 /* NSHTTPCookieStorage+Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = F2BE3E241EC31FB1001D7FF5 /* NSHTTPCookieStorage+Utils.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +59,10 @@
 		F26895AA1D780F01009112EB /* WKWebViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKWebViewController.h; sourceTree = "<group>"; };
 		F26895AB1D780F01009112EB /* WKWebViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WKWebViewController.m; sourceTree = "<group>"; };
 		F26895AF1D782B9D009112EB /* test.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = test.html; sourceTree = "<group>"; };
+		F2BE3E201EC314E4001D7FF5 /* NSHTTPCookie+Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSHTTPCookie+Utils.h"; sourceTree = "<group>"; };
+		F2BE3E211EC314E4001D7FF5 /* NSHTTPCookie+Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSHTTPCookie+Utils.m"; sourceTree = "<group>"; };
+		F2BE3E231EC31FB1001D7FF5 /* NSHTTPCookieStorage+Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSHTTPCookieStorage+Utils.h"; sourceTree = "<group>"; };
+		F2BE3E241EC31FB1001D7FF5 /* NSHTTPCookieStorage+Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSHTTPCookieStorage+Utils.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,6 +117,10 @@
 				F26895781D780DF9009112EB /* AppDelegate.m */,
 				F26895AF1D782B9D009112EB /* test.html */,
 				F2251FEC1EC1BE8D00F4D2D0 /* Constants.h */,
+				F2BE3E201EC314E4001D7FF5 /* NSHTTPCookie+Utils.h */,
+				F2BE3E211EC314E4001D7FF5 /* NSHTTPCookie+Utils.m */,
+				F2BE3E231EC31FB1001D7FF5 /* NSHTTPCookieStorage+Utils.h */,
+				F2BE3E241EC31FB1001D7FF5 /* NSHTTPCookieStorage+Utils.m */,
 				F26895A71D780EF6009112EB /* UIWebViewController.h */,
 				F26895A81D780EF7009112EB /* UIWebViewController.m */,
 				F26895AA1D780F01009112EB /* WKWebViewController.h */,
@@ -285,6 +295,8 @@
 				F26895791D780DF9009112EB /* AppDelegate.m in Sources */,
 				F26895761D780DF9009112EB /* main.m in Sources */,
 				F26895AC1D780F01009112EB /* WKWebViewController.m in Sources */,
+				F2BE3E251EC31FB1001D7FF5 /* NSHTTPCookieStorage+Utils.m in Sources */,
+				F2BE3E221EC314E4001D7FF5 /* NSHTTPCookie+Utils.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
