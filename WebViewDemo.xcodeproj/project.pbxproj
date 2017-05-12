@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F23B9BA01EC479BE0082DB40 /* ImgAddClickEvent.js in Resources */ = {isa = PBXBuildFile; fileRef = F23B9B9F1EC479BE0082DB40 /* ImgAddClickEvent.js */; };
 		F26895761D780DF9009112EB /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F26895751D780DF9009112EB /* main.m */; };
 		F26895791D780DF9009112EB /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F26895781D780DF9009112EB /* AppDelegate.m */; };
 		F268957F1D780DFA009112EB /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F268957D1D780DFA009112EB /* Main.storyboard */; };
@@ -17,6 +18,7 @@
 		F26895A91D780EF7009112EB /* UIWebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F26895A81D780EF7009112EB /* UIWebViewController.m */; };
 		F26895AC1D780F01009112EB /* WKWebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F26895AB1D780F01009112EB /* WKWebViewController.m */; };
 		F26895B01D782B9D009112EB /* test.html in Resources */ = {isa = PBXBuildFile; fileRef = F26895AF1D782B9D009112EB /* test.html */; };
+		F26A2B691EC5A1580011C2A0 /* NativeApi.js in Resources */ = {isa = PBXBuildFile; fileRef = F26A2B681EC5A1580011C2A0 /* NativeApi.js */; };
 		F2BE3E221EC314E4001D7FF5 /* NSHTTPCookie+Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = F2BE3E211EC314E4001D7FF5 /* NSHTTPCookie+Utils.m */; };
 		F2BE3E251EC31FB1001D7FF5 /* NSHTTPCookieStorage+Utils.m in Sources */ = {isa = PBXBuildFile; fileRef = F2BE3E241EC31FB1001D7FF5 /* NSHTTPCookieStorage+Utils.m */; };
 /* End PBXBuildFile section */
@@ -40,6 +42,7 @@
 
 /* Begin PBXFileReference section */
 		F2251FEC1EC1BE8D00F4D2D0 /* Constants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Constants.h; sourceTree = "<group>"; };
+		F23B9B9F1EC479BE0082DB40 /* ImgAddClickEvent.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = ImgAddClickEvent.js; sourceTree = "<group>"; };
 		F26895711D780DF9009112EB /* WebViewDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WebViewDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F26895751D780DF9009112EB /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		F26895771D780DF9009112EB /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -59,6 +62,7 @@
 		F26895AA1D780F01009112EB /* WKWebViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKWebViewController.h; sourceTree = "<group>"; };
 		F26895AB1D780F01009112EB /* WKWebViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WKWebViewController.m; sourceTree = "<group>"; };
 		F26895AF1D782B9D009112EB /* test.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = test.html; sourceTree = "<group>"; };
+		F26A2B681EC5A1580011C2A0 /* NativeApi.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = NativeApi.js; sourceTree = "<group>"; };
 		F2BE3E201EC314E4001D7FF5 /* NSHTTPCookie+Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSHTTPCookie+Utils.h"; sourceTree = "<group>"; };
 		F2BE3E211EC314E4001D7FF5 /* NSHTTPCookie+Utils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSHTTPCookie+Utils.m"; sourceTree = "<group>"; };
 		F2BE3E231EC31FB1001D7FF5 /* NSHTTPCookieStorage+Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSHTTPCookieStorage+Utils.h"; sourceTree = "<group>"; };
@@ -117,6 +121,8 @@
 				F26895781D780DF9009112EB /* AppDelegate.m */,
 				F26895AF1D782B9D009112EB /* test.html */,
 				F2251FEC1EC1BE8D00F4D2D0 /* Constants.h */,
+				F23B9B9F1EC479BE0082DB40 /* ImgAddClickEvent.js */,
+				F26A2B681EC5A1580011C2A0 /* NativeApi.js */,
 				F2BE3E201EC314E4001D7FF5 /* NSHTTPCookie+Utils.h */,
 				F2BE3E211EC314E4001D7FF5 /* NSHTTPCookie+Utils.m */,
 				F2BE3E231EC31FB1001D7FF5 /* NSHTTPCookieStorage+Utils.h */,
@@ -264,6 +270,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F26895841D780DFA009112EB /* LaunchScreen.storyboard in Resources */,
+				F23B9BA01EC479BE0082DB40 /* ImgAddClickEvent.js in Resources */,
+				F26A2B691EC5A1580011C2A0 /* NativeApi.js in Resources */,
 				F26895811D780DFA009112EB /* Assets.xcassets in Resources */,
 				F26895B01D782B9D009112EB /* test.html in Resources */,
 				F268957F1D780DFA009112EB /* Main.storyboard in Resources */,

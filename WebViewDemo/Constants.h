@@ -13,5 +13,7 @@ static NSString *const DAWebViewDemoScheme = @"darkangel";
 static NSString *const DAWebViewDemoHostSmsLogin = @"smsLogin";
 static NSString *const DAServerSessionCookieName = @"DarkAngelCookie";
 static NSString *const DAUserDefaultsCookieStorageKey = @"DAUserDefaultsCookieStorageKey";
+static NSString *const DAURLProtocolHandledKey = @"DAURLProtocolHandledKey";
+
 
 #endif /* Constants_h */

@@ -123,6 +123,19 @@
             result(YES);
         });
     };
+    
+    //先注入给图片添加点击事件的js
+    //防止频繁IO操作，造成性能影响
+    static NSString *jsSource;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        jsSource = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"ImgAddClickEvent" ofType:@"js"] encoding:NSUTF8StringEncoding error:nil];
+    });
+    [self.jsContext evaluateScript:jsSource];
+    //替换回调方法
+    self.jsContext[@"h5ImageDidClick"] = ^(NSDictionary *imgInfo) {
+        NSLog(@"UIWebView点击了html上的图片，信息是：%@", imgInfo);
+    };
 }
 
 

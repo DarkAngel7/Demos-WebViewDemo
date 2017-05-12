@@ -9,15 +9,23 @@
         <title>分享页</title>
     </head>
     <body>
+<!--      可以放开注释，测试img包含在a标签中时，是否还会添加onclick事件          -->
+<!--        <a>-->
+            <img src="http://cc.cocimg.com/api/uploads/170425/b2d6e7ea5b3172e6c39120b7bfd662fb.jpg">
+<!--        </a>-->
         <div>
             <a href="darkangel://smsLogin?username=12323123&code=892845">短信验证登录</a>
         </div>
         </div>
-            <a href="javascript:void(0);" class="sharebtn" onClick="share('分享标题', 'http://cc.cocimg.com/api/uploads/170425/b2d6e7ea5b3172e6c39120b7bfd662fb.jpg', location.href)">分享活动，领30元红包</a>
+            <a href="javascript:void(0);" class="sharebtn" onclick="share('分享标题', 'http://cc.cocimg.com/api/uploads/170425/b2d6e7ea5b3172e6c39120b7bfd662fb.jpg', location.href)">分享活动，领30元红包</a>
         </div>
-        <div onClick="alert(testAddMethod(1,5))">点击测试两数相加</div>
-        <a href="javascript:void(0);" onClick="test()">测试新分享</a></br>
+        <div onclick="alert(testAddMethod(1,5))">点击测试两数相加</div>
+        <a href="javascript:void(0);" onclick="test()">测试新分享</a></br>
         <h>下面展示分享结果</p><div id="shareResult"></div>
+        <div>
+            <a href="javascript:void(0);" onclick="chooseContact()">选择联系人</a>
+            <div id="contactInfo"></div>
+        </div>
         <script>
             //简单分享
             function share (title, imgUrl, link) {
@@ -72,6 +80,15 @@
                          }
                 });
             }
+        
+        function chooseContact() {
+            DANativeApi.choosePhoneContact({
+                                           completion: function(res) {
+                                           contactInfo.innerHTML = JSON.stringify(res);
+                                           }
+                                           });
+        }
+        
         </script>
     </body>
 </html>

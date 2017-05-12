@@ -10,14 +10,18 @@
 #import "NSHTTPCookie+Utils.h"
 #import "Constants.h"
 #import <WebKit/WebKit.h>
+#import <ContactsUI/ContactsUI.h>
 
 @interface WKWebViewController () <
 WKUIDelegate,
 WKNavigationDelegate,
-WKScriptMessageHandler
+WKScriptMessageHandler,
+CNContactPickerDelegate
 >
 
 @property (strong, nonatomic) WKWebView *webView;
+
+@property (nonatomic, copy) void (^completion)(NSString *name, NSString *phone);
 
 @end
 
@@ -74,6 +78,10 @@ WKScriptMessageHandler
     
     //更新webView的cookie
     [self updateWebViewCookie];
+    //图片添加点击事件
+    [self imgAddClickEvent];
+    //添加NativeApi
+    [self addNativeApiToJS];
     
     [self.webView loadRequest:[NSURLRequest requestWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"test" ofType:@"html"]]]];
     //可以测试百度还是test
@@ -96,9 +104,50 @@ WKScriptMessageHandler
     [self.webView.configuration.userContentController removeScriptMessageHandlerForName:@"share"];
     [self.webView.configuration.userContentController removeScriptMessageHandlerForName:@"currentCookies"];
     [self.webView.configuration.userContentController removeScriptMessageHandlerForName:@"shareNew"];
+    [self.webView.configuration.userContentController removeScriptMessageHandlerForName:@"imageDidClick"];
+    //NativeApi相关
+    [self.webView.configuration.userContentController removeScriptMessageHandlerForName:@"nativeShare"];
+    [self.webView.configuration.userContentController removeScriptMessageHandlerForName:@"nativeChoosePhoneContact"];
 }
 
 #pragma mark - Events
+
+/**
+ 页面中的所有img标签添加点击事件
+ */
+- (void)imgAddClickEvent
+{
+    //防止频繁IO操作，造成性能影响
+    static NSString *jsSource;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        jsSource = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"ImgAddClickEvent" ofType:@"js"] encoding:NSUTF8StringEncoding error:nil];
+    });
+    //添加自定义的脚本
+    WKUserScript *js = [[WKUserScript alloc] initWithSource:jsSource injectionTime:WKUserScriptInjectionTimeAtDocumentEnd forMainFrameOnly:NO];
+    [self.webView.configuration.userContentController addUserScript:js];
+    //注册回调
+    [self.webView.configuration.userContentController addScriptMessageHandler:self name:@"imageDidClick"];
+}
+
+/**
+ 添加native端的api
+ */
+- (void)addNativeApiToJS
+{
+    //防止频繁IO操作，造成性能影响
+    static NSString *nativejsSource;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        nativejsSource = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"NativeApi" ofType:@"js"] encoding:NSUTF8StringEncoding error:nil];
+    });
+    //添加自定义的脚本
+    WKUserScript *js = [[WKUserScript alloc] initWithSource:nativejsSource injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO];
+    [self.webView.configuration.userContentController addUserScript:js];
+    //注册回调
+    [self.webView.configuration.userContentController addScriptMessageHandler:self name:@"nativeShare"];
+    [self.webView.configuration.userContentController addScriptMessageHandler:self name:@"nativeChoosePhoneContact"];
+}
 
 /*!
  *  更新webView的cookie
@@ -187,6 +236,17 @@ WKScriptMessageHandler
         
     }];
      */
+}
+
+#pragma mark 选择联系人
+
+- (void)selectContactCompletion:(void (^)(NSString *name, NSString *phone))completion
+{
+    self.completion = completion;
+    CNContactPickerViewController *picker = [[CNContactPickerViewController alloc] init];
+    picker.delegate = self;
+    picker.displayedPropertyKeys = @[CNContactPhoneNumbersKey];
+    [self presentViewController:picker animated:YES completion:nil];
 }
 
 #pragma mark oc -> js
@@ -350,9 +410,9 @@ WKScriptMessageHandler
         id body = message.body;
         NSLog(@"share分享的内容为：%@", body);
     }
-    else if ([message.name isEqualToString:@"shareNew"]) {
+    else if ([message.name isEqualToString:@"shareNew"] || [message.name isEqualToString:@"nativeShare"]) {
         NSDictionary *shareData = message.body;
-        NSLog(@"shareNew分享的数据为： %@", shareData);
+        NSLog(@"%@分享的数据为： %@", message.name, shareData);
         //模拟异步回调
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             //读取js function的字符串
@@ -371,6 +431,88 @@ WKScriptMessageHandler
         NSString *cookiesStr = message.body;
         NSLog(@"当前的cookie为： %@", cookiesStr);
     }
+    else if ([message.name isEqualToString:@"imageDidClick"]) {
+        //点击了html上的图片
+        NSLog(@"点击了html上的图片，参数为%@", message.body);
+        /*
+         会log
+         
+         点击了html上的图片，参数为{
+         height = 168;
+         imgUrl = "http://cc.cocimg.com/api/uploads/170425/b2d6e7ea5b3172e6c39120b7bfd662fb.jpg";
+         imgUrls =     (
+         "http://cc.cocimg.com/api/uploads/170425/b2d6e7ea5b3172e6c39120b7bfd662fb.jpg"
+         );
+         index = 0;
+         width = 252;
+         x = 8;
+         y = 8;
+         }
+         
+         注意这里的x，y是不包含自定义scrollView的contentInset的，如果要获取图片在屏幕上的位置：
+         x = x + contentInset.left;
+         y = y + contentInset.top;
+         */
+        NSDictionary *dict = message.body;
+        NSString *selectedImageUrl = dict[@"imgUrl"];
+        CGFloat x = [dict[@"x"] floatValue] + + self.webView.scrollView.contentInset.left;
+        CGFloat y = [dict[@"y"] floatValue] + self.webView.scrollView.contentInset.top;
+        CGFloat width = [dict[@"width"] floatValue];
+        CGFloat height = [dict[@"height"] floatValue];
+        CGRect frame = CGRectMake(x, y, width, height);
+        NSUInteger index = [dict[@"index"] integerValue];
+        NSLog(@"点击了第%@个图片，\n链接为%@，\n在Screen中的绝对frame为%@，\n所有的图片数组为%@", @(index), selectedImageUrl, NSStringFromCGRect(frame), dict[@"imgUrls"]);
+        
+    }
+    //选择联系人
+    else if ([message.name isEqualToString:@"nativeChoosePhoneContact"]) {
+        NSLog(@"正在选择联系人");
+        
+        [self selectContactCompletion:^(NSString *name, NSString *phone) {
+            NSLog(@"选择完成");
+            //读取js function的字符串
+            NSString *jsFunctionString = message.body[@"completion"];
+            //拼接调用该方法的js字符串
+            NSString *callbackJs = [NSString stringWithFormat:@"(%@)({name: '%@', mobile: '%@'});", jsFunctionString, name, phone];
+            //执行回调
+            [self.webView evaluateJavaScript:callbackJs completionHandler:^(id _Nullable result, NSError * _Nullable error) {
+                
+            }];
+        }];
+    
+    }
+}
+
+#pragma mark - CNContactPickerDelegate
+
+- (void)contactPickerDidCancel:(CNContactPickerViewController *)picker
+{
+    [picker dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)contactPicker:(CNContactPickerViewController *)picker didSelectContactProperty:(CNContactProperty *)contactProperty
+{
+    if (![contactProperty.key isEqualToString:CNContactPhoneNumbersKey]) {
+        return;
+    }
+    CNContact *contact = contactProperty.contact;
+    NSString *name = [CNContactFormatter stringFromContact:contact style:CNContactFormatterStyleFullName];
+    
+    CNPhoneNumber *phoneNumber = contactProperty.value;
+    NSString *phone = phoneNumber.stringValue.length ? phoneNumber.stringValue : @"";
+    //可以把-、+86、空格这些过滤掉
+    NSString *phoneStr = [phone stringByReplacingOccurrencesOfString:@"-" withString:@""];
+    phoneStr = [phoneStr stringByReplacingOccurrencesOfString:@"+86" withString:@""];
+    phoneStr = [phoneStr stringByReplacingOccurrencesOfString:@" " withString:@""];
+    phoneStr = [[phoneStr componentsSeparatedByCharactersInSet:[[NSCharacterSet characterSetWithCharactersInString:@"0123456789"] invertedSet]] componentsJoinedByString:@""];
+    
+    //回调
+    if (self.completion) {
+        self.completion(name, phoneStr);
+    }
+    
+    //dismiss
+    [picker dismissViewControllerAnimated:YES completion:nil];
 }
 
 #pragma mark - Setters and Getters
